@@ -43,6 +43,7 @@ class LightGCN(object):
         self.log_dir=self.create_model_str()
         self.verbose = args.verbose
         self.Ks = eval(args.Ks)
+        self.aggregation_type = data_config['aggregation_type']
 
 
         '''
@@ -234,10 +235,10 @@ class LightGCN(object):
             A_fold_hat = self._split_A_hat_node_dropout(self.norm_adj)
         else:
             A_fold_hat = self._split_A_hat(self.norm_adj)
-        
+
         ego_embeddings = tf.concat([self.weights['user_embedding'], self.weights['item_embedding']], axis=0)
         all_embeddings = [ego_embeddings]
-        
+
         for k in range(0, self.n_layers):
 
             temp_embed = []
@@ -247,9 +248,23 @@ class LightGCN(object):
             side_embeddings = tf.concat(temp_embed, 0)
             ego_embeddings = side_embeddings
             all_embeddings += [ego_embeddings]
-        all_embeddings=tf.stack(all_embeddings,1)
-        all_embeddings=tf.reduce_mean(all_embeddings,axis=1,keepdims=False)
-        u_g_embeddings, i_g_embeddings = tf.split(all_embeddings, [self.n_users, self.n_items], 0)
+
+        all_embeddings = tf.stack(all_embeddings, 1)
+
+        if self.aggregation_type == 'weighted_average':
+            # Weighted average aggregation
+            layer_weights = [1 / (k + 1) for k in range(self.n_layers + 1)]
+            weighted_embeddings = [all_embeddings[:, k, :] * layer_weights[k] for k in range(self.n_layers + 1)]
+            final_embeddings = tf.reduce_sum(weighted_embeddings, axis=0)
+
+        elif self.aggregation_type == 'max_pooling':
+            # Maximum pooling aggregation
+            final_embeddings = tf.reduce_max(all_embeddings, axis=1)
+
+        else:
+            # Default mean aggregation
+            final_embeddings = tf.reduce_mean(all_embeddings, axis=1)
+        u_g_embeddings, i_g_embeddings = tf.split(final_embeddings, [self.n_users, self.n_items], 0)
         return u_g_embeddings, i_g_embeddings
     
     def _create_ngcf_embed(self):
@@ -461,6 +476,9 @@ if __name__ == '__main__':
         pretrain_data = load_pretrained_data()
     else:
         pretrain_data = None
+
+    config['aggregation_type'] = args.aggregation_type
+
     model = LightGCN(data_config=config, pretrain_data=pretrain_data)
     
     """

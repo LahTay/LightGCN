@@ -68,4 +68,7 @@ def parse_args():
     parser.add_argument('--report', type=int, default=0,
                         help='0: Disable performance report w.r.t. sparsity levels, 1: Show performance report w.r.t. sparsity levels')
 
+    parser.add_argument('--aggregation_type', nargs='?', default='mean',
+                        help='Specify the aggregation type for node embeddings from {mean, weighted_average, max_pooling}. Default is mean.')
+
     return parser.parse_args()
