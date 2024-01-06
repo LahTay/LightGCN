@@ -13,13 +13,13 @@ def argmax_top_k(a, top_k=50):
 
 def precision(rank, ground_truth):
     hits = [1 if item in ground_truth else 0 for item in rank]
-    result = np.cumsum(hits, dtype=np.float)/np.arange(1, len(rank)+1)
+    result = np.cumsum(hits, dtype=float)/np.arange(1, len(rank)+1)
     return result
 
 
 def recall(rank, ground_truth):
     hits = [1 if item in ground_truth else 0 for item in rank]
-    result = np.cumsum(hits, dtype=np.float) / len(ground_truth)
+    result = np.cumsum(hits, dtype=float) / len(ground_truth)
     return result
 
 
