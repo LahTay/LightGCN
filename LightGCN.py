@@ -11,11 +11,13 @@ C++ evaluation for top-k recommendation
 import os
 import sys
 import threading
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.python.client import device_lib
 from utility.helper import *
 from utility.batch_test import *
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+
+tf.disable_v2_behavior()
 
 cpus = [x.name for x in device_lib.list_local_devices() if x.device_type == 'CPU']
 
